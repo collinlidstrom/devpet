@@ -1,0 +1,44 @@
+name: Sprite validation
+
+on:
+  pull_request:
+    paths:
+      - "crates/devpet-pc/src/sprites.rs"
+      - "crates/devpet-pc/src/bin/sprite-sheet.rs"
+      - ".github/workflows/sprite-validation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "crates/devpet-pc/src/sprites.rs"
+      - "crates/devpet-pc/src/bin/sprite-sheet.rs"
+      - ".github/workflows/sprite-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-byte-sprites:
+    name: Validate 32x32 sprites
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Test sprite dimensions, palette, IDs, padding, and uniqueness
+        run: cargo test -p devpet-pc --lib sprites::tests
+      - name: Test contact sheet generator
+        run: cargo test -p devpet-pc --bin sprite-sheet
+      - name: Lint sprite code and tooling
+        run: cargo clippy -p devpet-pc --lib --bin sprite-sheet -- -D warnings
+      - name: Generate review contact sheet
+        run: cargo run -p devpet-pc --bin sprite-sheet -- artifacts/byte-sprite-contact-sheet.svg
+      - name: Upload contact sheet
+        uses: actions/upload-artifact@v4
+        with:
+          name: byte-sprite-contact-sheet
+          path: artifacts/byte-sprite-contact-sheet.svg
+          if-no-files-found: error

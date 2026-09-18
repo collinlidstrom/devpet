@@ -415,7 +415,8 @@ As of the current feature branch, M0 through the core of M4 are implemented in p
 
 Completed:
 - Rust workspace, deterministic core, Macroquad host, CI, and 160 x 144 presentation.
-- Orb Byte + Core placeholder renderer and mood feedback.
+- Ten original 32 x 32 Byte concept sprites, a canonical Orb Byte + Core renderer, and mood-driven Core feedback.
+- An in-game Byte Concepts gallery plus automated sprite validation and contact-sheet generation.
 - Care and Code screens with deterministic actions and resource costs.
 - Bug Squash minigame with deterministic rewards.
 - Versioned JSON persistence, autosave, atomic replacement, and offline catch-up cap.
@@ -426,7 +427,7 @@ Completed:
 - Unit coverage for hatching, all three evolution paths, resource gating, and deterministic transitions.
 
 Remaining before v0.1.0:
-- Final original sprite sheets and transition animations.
+- Final canonical animation sheets and transition animations.
 - Inventory, Devlog, and System screens.
 - Audio, settings, reset confirmation, and gamepad verification.
 - Save migration/corruption tests and visible hibernation state.
