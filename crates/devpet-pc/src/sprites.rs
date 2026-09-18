@@ -283,8 +283,8 @@ const fn slime_byte_pixels() -> [u8; SPRITE_PIXELS] {
 
 const fn bot_byte_pixels() -> [u8; SPRITE_PIXELS] {
     let mut canvas = Canvas::new();
-    canvas.vline(16, 1, 4, INK);
-    canvas.rect(14, 0, 5, 3, INK);
+    canvas.vline(16, 3, 3, INK);
+    canvas.rect(14, 1, 5, 3, INK);
     canvas.rect(5, 5, 22, 16, INK);
     canvas.rect(7, 7, 18, 12, BODY);
     canvas.rect(2, 10, 3, 7, INK);
