@@ -409,6 +409,32 @@ Technical references:
 
 These references are architectural learning material, not a source of commercial game assets or character designs.
 
+## Implementation status — personality milestone
+
+As of the current feature branch, M0 through the core of M4 are implemented in playable form.
+
+Completed:
+- Rust workspace, deterministic core, Macroquad host, CI, and 160 x 144 presentation.
+- Orb Byte + Core placeholder renderer and mood feedback.
+- Care and Code screens with deterministic actions and resource costs.
+- Bug Squash minigame with deterministic rewards.
+- Versioned JSON persistence, autosave, atomic replacement, and offline catch-up cap.
+- Egg/hatch lifecycle.
+- Care-history counters and derived personality.
+- Deterministic Bot / Beast / Ghost evolution.
+- Profile and Evolution screens.
+- Unit coverage for hatching, all three evolution paths, resource gating, and deterministic transitions.
+
+Remaining before v0.1.0:
+- Final original sprite sheets and transition animations.
+- Inventory, Devlog, and System screens.
+- Audio, settings, reset confirmation, and gamepad verification.
+- Save migration/corruption tests and visible hibernation state.
+- Golden vectors, fast-clock/debug tooling, Windows packaging, and smoke testing.
+- Balance/playtest pass for care decay, project costs, minigame rewards, and evolution thresholds.
+
+The current repository layout is intentionally smaller than the originally proposed module breakdown. Code should only be split into additional modules when behavior justifies it; the authoritative simulation remains isolated in `devpet-core`, while host persistence remains in `devpet-pc/src/storage.rs`.
+
 ## 14. First implementation checkpoint
 
 Do not begin with evolution or persistence. The first checkpoint is intentionally small:
