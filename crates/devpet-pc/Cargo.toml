@@ -1,0 +1,9 @@
+[package]
+name = "devpet-pc"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+devpet-core = { path = "../devpet-core" }
+macroquad = "0.4"
