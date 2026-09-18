@@ -177,6 +177,28 @@ All initial values and thresholds belong in one rules table, not scattered throu
 
 ## 7. Controls and screen model
 
+### Locked visual direction
+
+The MVP uses the classic virtual-pet UI direction: Byte is the focal point on a compact 160 x 144 screen with a persistent action bar and intentionally constrained pixel UI.
+
+Canonical Byte is the **32 x 32 Orb Byte + Core** design. Byte has a round, highly readable silhouette, large expressive eyes, tiny feet, and a central Core indicator. The Core communicates state through animation: steady while idle, pulsing while happy, blinking while coding, dim while exhausted, irregular while sick, rapid when evolution-ready, and glitching when corrupted.
+
+Recommended screen set:
+- Home — Byte, alerts, core stats, CODE / CARE / PLAY / MENU.
+- Code — choose projects and exchange energy/focus for XP and progression.
+- Coding Activity — Byte-at-work animation and build progress.
+- Care — health, energy, happiness, focus plus food/coffee/rest/clean/treat.
+- Play — minigame selection, starting with Bug Squash.
+- Inventory — collectible/equippable developer gear.
+- Profile — age, level, XP, projects, bugs fixed, streak and personality.
+- Evolution — obscured branches so care behavior drives discovery.
+- Devlog — achievements and milestones.
+- System — save/load, audio, controls, scaling, reset, credits and exit.
+
+Initial Byte animation budget: Idle, Blink, Walk, Happy, Sad, Sleep, Eat, Coffee, Code, Error, Play, Evolution. Target 2-4 frames per animation and roughly 35-40 32 x 32 frames total.
+
+
+
 The PC shell should preserve a handheld interaction model.
 
 | Action | Keyboard | Gamepad |
