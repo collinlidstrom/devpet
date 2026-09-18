@@ -177,6 +177,28 @@ All initial values and thresholds belong in one rules table, not scattered throu
 
 ## 7. Controls and screen model
 
+### Locked visual direction
+
+The MVP uses the classic virtual-pet UI direction: Byte is the focal point on a compact 160 x 144 screen with a persistent action bar and intentionally constrained pixel UI.
+
+Canonical Byte is the **32 x 32 Orb Byte + Core** design. Byte has a round, highly readable silhouette, large expressive eyes, tiny feet, and a central Core indicator. The Core communicates state through animation: steady while idle, pulsing while happy, blinking while coding, dim while exhausted, irregular while sick, rapid when evolution-ready, and glitching when corrupted.
+
+Recommended screen set:
+- Home — Byte, alerts, core stats, CODE / CARE / PLAY / MENU.
+- Code — choose projects and exchange energy/focus for XP and progression.
+- Coding Activity — Byte-at-work animation and build progress.
+- Care — health, energy, happiness, focus plus food/coffee/rest/clean/treat.
+- Play — minigame selection, starting with Bug Squash.
+- Inventory — collectible/equippable developer gear.
+- Profile — age, level, XP, projects, bugs fixed, streak and personality.
+- Evolution — obscured branches so care behavior drives discovery.
+- Devlog — achievements and milestones.
+- System — save/load, audio, controls, scaling, reset, credits and exit.
+
+Initial Byte animation budget: Idle, Blink, Walk, Happy, Sad, Sleep, Eat, Coffee, Code, Error, Play, Evolution. Target 2-4 frames per animation and roughly 35-40 32 x 32 frames total.
+
+
+
 The PC shell should preserve a handheld interaction model.
 
 | Action | Keyboard | Gamepad |
@@ -386,6 +408,32 @@ Technical references:
 - [Analogue Pocket Guide core catalog](https://github.com/latentDaniel/analogue-pocket-guide/blob/main/docs/06-core-catalog.md) for ecosystem discovery
 
 These references are architectural learning material, not a source of commercial game assets or character designs.
+
+## Implementation status — personality milestone
+
+As of the current feature branch, M0 through the core of M4 are implemented in playable form.
+
+Completed:
+- Rust workspace, deterministic core, Macroquad host, CI, and 160 x 144 presentation.
+- Orb Byte + Core placeholder renderer and mood feedback.
+- Care and Code screens with deterministic actions and resource costs.
+- Bug Squash minigame with deterministic rewards.
+- Versioned JSON persistence, autosave, atomic replacement, and offline catch-up cap.
+- Egg/hatch lifecycle.
+- Care-history counters and derived personality.
+- Deterministic Bot / Beast / Ghost evolution.
+- Profile and Evolution screens.
+- Unit coverage for hatching, all three evolution paths, resource gating, and deterministic transitions.
+
+Remaining before v0.1.0:
+- Final original sprite sheets and transition animations.
+- Inventory, Devlog, and System screens.
+- Audio, settings, reset confirmation, and gamepad verification.
+- Save migration/corruption tests and visible hibernation state.
+- Golden vectors, fast-clock/debug tooling, Windows packaging, and smoke testing.
+- Balance/playtest pass for care decay, project costs, minigame rewards, and evolution thresholds.
+
+The current repository layout is intentionally smaller than the originally proposed module breakdown. Code should only be split into additional modules when behavior justifies it; the authoritative simulation remains isolated in `devpet-core`, while host persistence remains in `devpet-pc/src/storage.rs`.
 
 ## 14. First implementation checkpoint
 
