@@ -104,14 +104,7 @@ fn core_color(mood: Mood, time: f32) -> Color {
     }
 }
 
-fn draw_sprite(
-    sprite: &Sprite32,
-    x: f32,
-    y: f32,
-    pixel_scale: f32,
-    mood: Mood,
-    time: f32,
-) {
+fn draw_sprite(sprite: &Sprite32, x: f32, y: f32, pixel_scale: f32, mood: Mood, time: f32) {
     for pixel_y in 0..SPRITE_HEIGHT {
         for pixel_x in 0..SPRITE_WIDTH {
             let color = match sprite.pixel(pixel_x, pixel_y) {
@@ -135,11 +128,7 @@ fn draw_sprite(
 fn draw_egg(x: f32, y: f32, time: f32) {
     draw_ellipse(x + 16., y + 17., 11., 14., 0., INK);
     draw_ellipse(x + 16., y + 17., 8., 11., 0., BG);
-    let crack = if (time * 3.) as i32 % 2 == 0 {
-        0.
-    } else {
-        1.
-    };
+    let crack = if (time * 3.) as i32 % 2 == 0 { 0. } else { 1. };
     draw_line(x + 11., y + 16., x + 15., y + 19. + crack, 1., INK);
     draw_line(x + 15., y + 19. + crack, x + 20., y + 15., 1., INK);
 }
@@ -176,14 +165,7 @@ fn creature(x: f32, y: f32, pet: &PetState, time: f32) {
             INK,
         );
         draw_line(x + 5., y + 22. + bob, x + 1., y + 26. + bob, 2., INK);
-        draw_line(
-            x + 28.,
-            y + 22. + bob,
-            x + 32.,
-            y + 26. + bob,
-            2.,
-            INK,
-        );
+        draw_line(x + 28., y + 22. + bob, x + 32., y + 26. + bob, 2., INK);
     }
 }
 
@@ -298,8 +280,7 @@ async fn main() {
                     sprite_index = (sprite_index + 1) % BYTE_CONCEPTS.len();
                 }
                 if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) {
-                    sprite_index =
-                        (sprite_index + BYTE_CONCEPTS.len() - 1) % BYTE_CONCEPTS.len();
+                    sprite_index = (sprite_index + BYTE_CONCEPTS.len() - 1) % BYTE_CONCEPTS.len();
                 }
                 if confirm {
                     screen = Screen::Profile;
@@ -386,8 +367,7 @@ async fn main() {
                 txt("EN", 65., 80., 6);
                 bar(77., 77., pet.energy);
                 draw_line(3., 90., 157., 90., 1., INK);
-                for (index, action) in ["CODE", "CARE", "PLAY", "MENU"].iter().enumerate()
-                {
+                for (index, action) in ["CODE", "CARE", "PLAY", "MENU"].iter().enumerate() {
                     let x = 5. + index as f32 * 39.;
                     if index == selection {
                         draw_rectangle(x - 2., 96., 36., 13., INK);
@@ -462,12 +442,7 @@ async fn main() {
                 txt("< BYTE PROFILE", 5., 10., 7);
                 creature(64., 12., &pet, animation_time);
                 txt(&format!("FORM {:?}", pet.species), 8., 54., 7);
-                txt(
-                    &format!("PERSONALITY {:?}", pet.personality()),
-                    8.,
-                    65.,
-                    7,
-                );
+                txt(&format!("PERSONALITY {:?}", pet.personality()), 8., 65., 7);
                 txt(
                     &format!("AGE {}m  LV {}", pet.age_minutes, pet.level),
                     8.,

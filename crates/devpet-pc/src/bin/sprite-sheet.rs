@@ -63,8 +63,11 @@ fn render_sheet() -> String {
         r##"<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" shape-rendering="crispEdges">"##
     )
     .expect("writing to a String cannot fail");
-    writeln!(svg, r##"  <rect width="100%" height="100%" fill="#f4f3e9"/>"##)
-        .expect("writing to a String cannot fail");
+    writeln!(
+        svg,
+        r##"  <rect width="100%" height="100%" fill="#f4f3e9"/>"##
+    )
+    .expect("writing to a String cannot fail");
     writeln!(
         svg,
         r##"  <text x="24" y="34" fill="#19281e" font-family="ui-monospace, monospace" font-size="22" font-weight="700">BYTE // 32 x 32 CONCEPT SPRITES</text>"##
@@ -79,12 +82,8 @@ fn render_sheet() -> String {
         let sprite_x = cell_x + (CELL_WIDTH - sprite_size) / 2;
         let sprite_y = cell_y + 14;
 
-        writeln!(
-            svg,
-            r##"  <g id="{}" class="byte-sprite">"##,
-            sprite.id
-        )
-        .expect("writing to a String cannot fail");
+        writeln!(svg, r##"  <g id="{}" class="byte-sprite">"##, sprite.id)
+            .expect("writing to a String cannot fail");
         writeln!(
             svg,
             r##"    <rect x="{}" y="{}" width="{}" height="{}" rx="8" fill="#d4deaa" stroke="#94a66f" stroke-width="2"/>"##,
