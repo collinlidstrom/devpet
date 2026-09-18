@@ -6,7 +6,7 @@ The first release will let a player hatch and care for Byte, play a short miniga
 
 ## Status
 
-Planning. The implementation has not started yet.
+**M0/M1 implementation in progress.** The PC prototype now has the deterministic core, classic virtual-pet home UI, and the original 32x32 Orb Byte + Core character direction.
 
 ## Technical direction
 
