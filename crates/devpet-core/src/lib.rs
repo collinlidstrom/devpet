@@ -237,16 +237,16 @@ impl PetState {
                 }
                 continue;
             }
-            if self.age_minutes % 20 == 0 {
+            if self.age_minutes.is_multiple_of(20) {
                 self.fullness = sub(self.fullness, 1)
             }
-            if self.age_minutes % 25 == 0 {
+            if self.age_minutes.is_multiple_of(25) {
                 self.energy = sub(self.energy, 1)
             }
-            if self.age_minutes % 30 == 0 {
+            if self.age_minutes.is_multiple_of(30) {
                 self.focus = sub(self.focus, 1)
             }
-            if self.fullness == 0 && self.age_minutes % 30 == 0 {
+            if self.fullness == 0 && self.age_minutes.is_multiple_of(30) {
                 self.health = sub(self.health, 2);
                 self.care_mistakes = self.care_mistakes.saturating_add(1)
             }
@@ -268,30 +268,36 @@ mod tests {
     }
     #[test]
     fn bot_path() {
-        let mut p = PetState::default();
-        p.species = Species::Byte;
-        p.age_minutes = EVOLVE_MINUTES;
-        p.projects = 8;
-        p.play_sessions = 1;
+        let mut p = PetState {
+            species: Species::Byte,
+            age_minutes: EVOLVE_MINUTES,
+            projects: 8,
+            play_sessions: 1,
+            ..PetState::default()
+        };
         assert!(p.maybe_evolve());
         assert_eq!(p.species, Species::Bot)
     }
     #[test]
     fn beast_path() {
-        let mut p = PetState::default();
-        p.species = Species::Byte;
-        p.age_minutes = EVOLVE_MINUTES;
-        p.feeds = 8;
-        p.play_sessions = 8;
+        let mut p = PetState {
+            species: Species::Byte,
+            age_minutes: EVOLVE_MINUTES,
+            feeds: 8,
+            play_sessions: 8,
+            ..PetState::default()
+        };
         assert!(p.maybe_evolve());
         assert_eq!(p.species, Species::Beast)
     }
     #[test]
     fn ghost_path() {
-        let mut p = PetState::default();
-        p.species = Species::Byte;
-        p.age_minutes = EVOLVE_MINUTES;
-        p.care_mistakes = 4;
+        let mut p = PetState {
+            species: Species::Byte,
+            age_minutes: EVOLVE_MINUTES,
+            care_mistakes: 4,
+            ..PetState::default()
+        };
         assert!(p.maybe_evolve());
         assert_eq!(p.species, Species::Ghost)
     }

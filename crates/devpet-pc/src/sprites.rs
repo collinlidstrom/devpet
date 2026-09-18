@@ -253,8 +253,8 @@ const fn bug_byte_pixels() -> [u8; SPRITE_PIXELS] {
     canvas.put(19, 18, INK);
     canvas.rect(6, 15, 6, 2, CORE);
     canvas.rect(21, 15, 5, 2, CORE);
-    canvas.hline(0, 13, 5, INK);
-    canvas.hline(27, 13, 5, INK);
+    canvas.hline(1, 13, 4, INK);
+    canvas.hline(27, 13, 4, INK);
     canvas.hline(1, 20, 5, INK);
     canvas.hline(26, 20, 5, INK);
     canvas.finish()
