@@ -1,3 +1,4 @@
+mod storage;
 use devpet_core::{Action,Mood,PetState,Project};
 use macroquad::prelude::*;
 const W:f32=160.;const H:f32=144.;const BG:Color=Color::new(.82,.87,.68,1.);const INK:Color=Color::new(.10,.16,.12,1.);
@@ -9,10 +10,10 @@ fn choice(label:&str,y:f32,on:bool){if on{draw_rectangle(10.,y-8.,140.,11.,INK);
 fn byte(x:f32,y:f32,p:&PetState,t:f32){let b=if(t*2.)as i32%2==0{0.}else{1.};draw_circle(x+16.,y+15.+b,12.,INK);draw_circle(x+16.,y+15.+b,9.,BG);draw_rectangle(x+10.,y+12.+b,3.,3.,INK);draw_rectangle(x+20.,y+12.+b,3.,3.,INK);let m=y+21.+b;match p.mood{Mood::Happy=>{draw_line(x+13.,m,x+16.,m+2.,1.,INK);draw_line(x+16.,m+2.,x+20.,m,1.,INK);}Mood::Sick=>draw_line(x+13.,m+1.,x+20.,m+1.,1.,INK),_=>draw_line(x+14.,m,x+19.,m,1.,INK)}let q=if(t*4.)as i32%2==0{3.}else{2.};draw_rectangle(x+15.,y+25.+b,q,q,INK);draw_rectangle(x+8.,y+27.+b,6.,3.,INK);draw_rectangle(x+19.,y+27.+b,6.,3.,INK);}
 fn nav(sel:&mut usize,n:usize){if is_key_pressed(KeyCode::Down)||is_key_pressed(KeyCode::S){*sel=(*sel+1)%n}if is_key_pressed(KeyCode::Up)||is_key_pressed(KeyCode::W){*sel=(*sel+n-1)%n}}
 #[macroquad::main(conf)]async fn main(){
- let mut pet=PetState::default();let mut screen=Screen::Home;let mut sel=0usize;let mut last=get_time();
- let mut game_start=0.;let mut hits=0u8;let mut bug_x=30.;let mut bug_y=50.;
+ let mut pet=storage::load();let mut screen=Screen::Home;let mut sel=0usize;let mut last=get_time();
+ let mut game_start=0.;let mut hits=0u8;let mut bug_x=30.;let mut bug_y=50.;let mut last_save=get_time();
  loop{
-  if get_time()-last>=1.{pet.advance_minutes(1);last=get_time();}
+  if get_time()-last>=1.{pet.advance_minutes(1);last=get_time();}if get_time()-last_save>=15.{let _=storage::save(&pet);last_save=get_time();}
   let ok=is_key_pressed(KeyCode::Enter)||is_key_pressed(KeyCode::Z);let back=is_key_pressed(KeyCode::Escape)||is_key_pressed(KeyCode::X);
   if back&&screen!=Screen::Home{screen=Screen::Home;sel=0;}
   match screen{
@@ -30,6 +31,6 @@ fn nav(sel:&mut usize,n:usize){if is_key_pressed(KeyCode::Down)||is_key_pressed(
    Screen::Code=>{txt("< CODE / CHOOSE PROJECT",5.,10.,7);let labels=["FIX A BUG      +15 XP","BUILD FEATURE  +30 XP","REFACTOR       +20 XP","SHIP RELEASE   +50 XP"];for(i,a)in labels.iter().enumerate(){choice(a,35.+i as f32*18.,i==sel)}txt(&format!("ENERGY {}  FOCUS {}",pet.energy,pet.focus),10.,116.,7);txt("UP/DOWN  ENTER   X=BACK",10.,135.,6);}
    Screen::Play=>{txt("< PLAY",5.,10.,7);txt("BUG SQUASH",45.,45.,10);txt("20 SECOND MOUSE GAME",30.,63.,7);txt("CLICK BUGS BEFORE THEY MOVE!",17.,80.,6);choice("START",110.,true);txt("X = BACK",55.,135.,6);}
    Screen::BugSquash=>{let left=(20.-(get_time()-game_start)).max(0.);txt(&format!("BUG SQUASH   {:02}s",left.ceil()as i32),5.,10.,7);txt(&format!("HITS {}",hits),120.,10.,7);draw_circle(bug_x,bug_y,6.,INK);draw_line(bug_x-8.,bug_y-6.,bug_x+8.,bug_y+6.,1.,INK);draw_line(bug_x+8.,bug_y-6.,bug_x-8.,bug_y+6.,1.,INK);txt("CLICK THE BUG!",48.,132.,7);}
-  }set_default_camera();next_frame().await;
+  }set_default_camera();if is_key_pressed(KeyCode::Q){let _=storage::save(&pet);break;}next_frame().await;
  }
 }
