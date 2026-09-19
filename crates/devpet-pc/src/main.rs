@@ -1,6 +1,7 @@
 mod storage;
 
 use devpet_core::{Action, Mood, PetState, Project, Species};
+use devpet_pc::navigation::{self, Target};
 use devpet_pc::sprites::{
     Sprite32, BODY as BODY_INDEX, BOT_BYTE, BYTE_CONCEPTS, CORE as CORE_INDEX, GHOST_BYTE,
     INK as INK_INDEX, ORB_BYTE, SPRITE_HEIGHT, SPRITE_WIDTH, TRANSPARENT,
@@ -178,6 +179,23 @@ fn nav(selection: &mut usize, count: usize) {
     }
 }
 
+fn menu_targets(screen: Screen) -> Vec<Target> {
+    match screen {
+        Screen::Home => (0..4).map(navigation::home).collect(),
+        Screen::Care => (0..4)
+            .map(|i| navigation::row(99. + i as f32 * 10.))
+            .collect(),
+        Screen::Code => (0..4)
+            .map(|i| navigation::row(35. + i as f32 * 18.))
+            .collect(),
+        Screen::Profile => (0..3)
+            .map(|i| navigation::row(112. + i as f32 * 11.))
+            .collect(),
+        Screen::Play => vec![navigation::row(110.)],
+        _ => Vec::new(),
+    }
+}
+
 #[macroquad::main(conf)]
 async fn main() {
     let mut pet = storage::load();
@@ -201,8 +219,38 @@ async fn main() {
             last_save = get_time();
         }
 
-        let confirm = is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::Z);
-        let back = is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::X);
+        let pointer =
+            navigation::logical_pointer(screen_width(), screen_height(), mouse_position());
+        let clicked = is_mouse_button_pressed(MouseButton::Left);
+        let targets = menu_targets(screen);
+        let hovered = pointer.and_then(|p| targets.iter().position(|target| target.contains(p)));
+        let mut confirm = is_key_pressed(KeyCode::Enter)
+            || is_key_pressed(KeyCode::Z)
+            || is_key_pressed(KeyCode::Space);
+        // Hover is visual only: a stationary pointer must not steal keyboard focus.
+        if clicked {
+            if let Some(index) = hovered {
+                selection = index;
+                confirm = true;
+            }
+        }
+        if screen == Screen::Home {
+            for (index, key) in [KeyCode::Key1, KeyCode::Key2, KeyCode::Key3, KeyCode::Key4]
+                .iter()
+                .enumerate()
+            {
+                if is_key_pressed(*key) {
+                    selection = index;
+                    confirm = true;
+                }
+            }
+        }
+        let back = is_key_pressed(KeyCode::Escape)
+            || is_key_pressed(KeyCode::X)
+            || (clicked
+                && screen != Screen::Home
+                && screen != Screen::BugSquash
+                && pointer.is_some_and(|p| navigation::BACK.contains(p)));
 
         if back {
             match screen {
@@ -218,107 +266,108 @@ async fn main() {
             }
         }
 
-        match screen {
-            Screen::Home => {
-                if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) {
-                    selection = (selection + 1) % 4;
+        if !back {
+            match screen {
+                Screen::Home => {
+                    if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) {
+                        selection = (selection + 1) % 4;
+                    }
+                    if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) {
+                        selection = (selection + 3) % 4;
+                    }
+                    if confirm {
+                        screen = match selection {
+                            0 => Screen::Code,
+                            1 => Screen::Care,
+                            2 => Screen::Play,
+                            _ => Screen::Profile,
+                        };
+                        selection = 0;
+                    }
                 }
-                if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) {
-                    selection = (selection + 3) % 4;
+                Screen::Care => {
+                    nav(&mut selection, 4);
+                    if confirm {
+                        pet.apply(match selection {
+                            0 => Action::Feed,
+                            1 => Action::Coffee,
+                            2 => Action::Rest,
+                            _ => Action::Medicine,
+                        });
+                    }
                 }
-                if confirm {
-                    screen = match selection {
-                        0 => Screen::Code,
-                        1 => Screen::Care,
-                        2 => Screen::Play,
-                        _ => Screen::Profile,
-                    };
-                    selection = 0;
+                Screen::Code => {
+                    nav(&mut selection, 4);
+                    if confirm {
+                        pet.run_project(match selection {
+                            0 => Project::FixBug,
+                            1 => Project::BuildFeature,
+                            2 => Project::Refactor,
+                            _ => Project::ShipRelease,
+                        });
+                    }
                 }
-            }
-            Screen::Care => {
-                nav(&mut selection, 4);
-                if confirm {
-                    pet.apply(match selection {
-                        0 => Action::Feed,
-                        1 => Action::Coffee,
-                        2 => Action::Rest,
-                        _ => Action::Medicine,
-                    });
+                Screen::Profile => {
+                    nav(&mut selection, 3);
+                    if confirm {
+                        screen = match selection {
+                            0 => Screen::Evolution,
+                            1 => Screen::SpriteGallery,
+                            _ => Screen::Home,
+                        };
+                        selection = 0;
+                    }
                 }
-            }
-            Screen::Code => {
-                nav(&mut selection, 4);
-                if confirm {
-                    pet.run_project(match selection {
-                        0 => Project::FixBug,
-                        1 => Project::BuildFeature,
-                        2 => Project::Refactor,
-                        _ => Project::ShipRelease,
-                    });
+                Screen::Evolution => {
+                    if confirm {
+                        screen = Screen::Profile;
+                        selection = 0;
+                    }
                 }
-            }
-            Screen::Profile => {
-                nav(&mut selection, 3);
-                if confirm {
-                    screen = match selection {
-                        0 => Screen::Evolution,
-                        1 => Screen::SpriteGallery,
-                        _ => Screen::Home,
-                    };
-                    selection = 0;
-                }
-            }
-            Screen::Evolution => {
-                if confirm {
-                    screen = Screen::Profile;
-                    selection = 0;
-                }
-            }
-            Screen::SpriteGallery => {
-                if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) {
-                    sprite_index = (sprite_index + 1) % BYTE_CONCEPTS.len();
-                }
-                if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) {
-                    sprite_index = (sprite_index + BYTE_CONCEPTS.len() - 1) % BYTE_CONCEPTS.len();
-                }
-                if confirm {
-                    screen = Screen::Profile;
-                    selection = 0;
-                }
-            }
-            Screen::Play => {
-                if confirm {
-                    screen = Screen::BugSquash;
-                    game_start = get_time();
-                    hits = 0;
-                    bug_x = 30.;
-                    bug_y = 50.;
-                }
-            }
-            Screen::BugSquash => {
-                let elapsed = get_time() - game_start;
-                if elapsed >= 20. {
-                    pet.bug_squash_reward(hits);
-                    screen = Screen::Home;
-                    selection = 0;
-                } else {
-                    let (mouse_x, mouse_y) = mouse_position();
-                    let scale = (screen_width() / W)
-                        .min(screen_height() / H)
-                        .floor()
-                        .max(1.);
-                    let offset_x = (screen_width() - W * scale) / 2.;
-                    let offset_y = (screen_height() - H * scale) / 2.;
-                    let logical_x = (mouse_x - offset_x) / scale;
-                    let logical_y = (mouse_y - offset_y) / scale;
-                    if is_mouse_button_pressed(MouseButton::Left)
-                        && (logical_x - bug_x).abs() < 8.
-                        && (logical_y - bug_y).abs() < 8.
+                Screen::SpriteGallery => {
+                    if is_key_pressed(KeyCode::Right)
+                        || is_key_pressed(KeyCode::D)
+                        || (clicked && pointer.is_some_and(|p| navigation::NEXT.contains(p)))
                     {
-                        hits = hits.saturating_add(1);
-                        bug_x = 15. + (f32::from(hits) * 37.) % 130.;
-                        bug_y = 30. + (f32::from(hits) * 23.) % 70.;
+                        sprite_index = (sprite_index + 1) % BYTE_CONCEPTS.len();
+                    }
+                    if is_key_pressed(KeyCode::Left)
+                        || is_key_pressed(KeyCode::A)
+                        || (clicked && pointer.is_some_and(|p| navigation::PREVIOUS.contains(p)))
+                    {
+                        sprite_index =
+                            (sprite_index + BYTE_CONCEPTS.len() - 1) % BYTE_CONCEPTS.len();
+                    }
+                    if confirm {
+                        screen = Screen::Profile;
+                        selection = 0;
+                    }
+                }
+                Screen::Play => {
+                    if confirm {
+                        screen = Screen::BugSquash;
+                        game_start = get_time();
+                        hits = 0;
+                        bug_x = 30.;
+                        bug_y = 50.;
+                    }
+                }
+                Screen::BugSquash => {
+                    let elapsed = get_time() - game_start;
+                    if elapsed >= 20. {
+                        pet.bug_squash_reward(hits);
+                        screen = Screen::Home;
+                        selection = 0;
+                    } else {
+                        if clicked
+                            && pointer.is_some_and(|(x, y)| {
+                                (x - bug_x).abs() < 8. && (y - bug_y).abs() < 8.
+                            })
+                        {
+                            hits = hits.saturating_add(1);
+                            bug_x = 15. + (f32::from(hits) * 37.) % 130.;
+                            bug_y = 30. + (f32::from(hits) * 23.) % 70.;
+                        }
                     }
                 }
             }
@@ -342,7 +391,7 @@ async fn main() {
             )),
             ..Default::default()
         });
-        clear_background(BG);
+        draw_rectangle(0., 0., W, H, BG);
 
         let animation_time = get_time() as f32;
         match screen {
@@ -394,7 +443,7 @@ async fn main() {
                     123.,
                     6,
                 );
-                txt("ARROWS + ENTER/Z", 5., 137., 6);
+                txt("CLICK / 1-4 / ARROWS + ENTER", 5., 137., 6);
             }
             Screen::Care => {
                 txt("< CARE", 5., 10., 7);
@@ -493,6 +542,8 @@ async fn main() {
                 txt("ENTER/X = BACK", 42., 137., 6);
             }
             Screen::SpriteGallery => {
+                txt("<", 14., 60., 12);
+                txt(">", 139., 60., 12);
                 let sprite = BYTE_CONCEPTS[sprite_index];
                 txt("< BYTE CONCEPTS", 5., 10., 7);
                 txt(
@@ -530,6 +581,21 @@ async fn main() {
             }
         }
 
+        // Resolve against the new screen after a transition, not stale targets.
+        if let Some(point) = pointer {
+            let mut visible_targets = menu_targets(screen);
+            if screen != Screen::Home && screen != Screen::BugSquash {
+                visible_targets.push(navigation::BACK);
+            }
+            if screen == Screen::SpriteGallery {
+                visible_targets.extend([navigation::PREVIOUS, navigation::NEXT]);
+            }
+            for target in visible_targets {
+                if target.contains(point) {
+                    draw_rectangle_lines(target.x, target.y, target.w, target.h, 1., CORE_BRIGHT);
+                }
+            }
+        }
         set_default_camera();
         if is_key_pressed(KeyCode::Q) {
             let _ = storage::save(&pet);

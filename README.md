@@ -28,7 +28,11 @@ Run the current PC build:
 cargo run -p devpet-pc
 ```
 
-Controls: arrows/WASD navigate, Enter/Z confirms, Escape/X goes back, mouse plays Bug Squash, and Q saves and quits.
+Controls: click menu items to activate them; click a screen's top-left heading to go back. Hover outlines identify clickable areas without overriding keyboard selection. In Byte Concepts, click the left/right arrows to browse.
+
+Keyboard: arrows/WASD navigate, Enter/Z/Space confirms, Escape/X goes back, and 1–4 opens Code/Care/Play/Menu from Home. Mouse plays Bug Squash; Q saves and quits. The game remains PC-first with mouse and keyboard; gamepad support is future work.
+
+See [the PC controls smoke test](docs/PC_CONTROLS.md) for interaction and resizing checks.
 
 ## Project layout
 
@@ -43,6 +47,7 @@ devpet/
 │           ├── bin/
 │           │   └── sprite-sheet.rs # deterministic SVG contact-sheet generator
 │           ├── lib.rs        # desktop support library entry point
+│           ├── navigation.rs # pure mouse hit-testing and viewport mapping
 │           ├── main.rs       # Macroquad host, screens, input and pixel renderer
 │           ├── sprites.rs    # ten validated 32 x 32 indexed Byte concepts
 │           └── storage.rs    # versioned saves and offline catch-up
