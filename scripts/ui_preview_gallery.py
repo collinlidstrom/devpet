@@ -8,8 +8,13 @@ import sys
 
 def main():
     directory = Path(sys.argv[1])
-    screens = ["home", "care", "code", "play", "bug-squash", "profile", "evolution"]
-    names = screens + [f"sprite-{i:02}" for i in range(1, 11)]
+    theme = sys.argv[2] if len(sys.argv) > 2 else "preview"
+    screens = ["home", "care", "code", "play", "bug-squash", "profile", "evolution", "settings"]
+    names = (
+        screens
+        + [f"sprite-{i:02}" for i in range(1, 11)]
+        + ["bot", "beast", "ghost", "low-stat-warning"]
+    )
     expected = [f"{i:02}-{name}.png" for i, name in enumerate(names)]
     actual = sorted(p.name for p in directory.glob("*.png"))
     if actual != expected:
@@ -24,6 +29,7 @@ def main():
         title = html.escape(name.replace("-", " ").title())
         figures.append(f'<figure><a href="{filename}"><img src="{filename}" alt="{title}"></a>'
                        f'<figcaption>{title}</figcaption></figure>')
+    theme_title = html.escape(theme.replace("-", " ").title())
     document = """<!doctype html>
 <html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>DevPet UI preview</title>
@@ -33,7 +39,7 @@ main{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2
 figure{margin:0;padding:12px;background:#26382b;border-radius:12px}
 img{width:100%;height:auto;image-rendering:pixelated}figcaption{padding:12px 0 0}
 </style><h1>DevPet UI preview</h1>
-<p>Actual desktop renderer · Fixed sample state · 640 × 576 screenshots. Click to view full size.</p>
+<p>Theme: """ + theme_title + """ · Actual desktop renderer · Fixed sample state · 640 × 576 screenshots. Click to view full size.</p>
 <main>""" + "\n".join(figures) + "</main></html>"
     (directory / "index.html").write_text(document, encoding="utf-8")
     print(f"Validated {len(expected)} captures and created {directory / 'index.html'}")

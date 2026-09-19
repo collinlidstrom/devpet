@@ -1,2 +1,6 @@
 /target/
 /ui-preview/
+/devpet-save.json
+/devpet-save.json.tmp
+/devpet-settings.json
+/devpet-settings.json.tmp
