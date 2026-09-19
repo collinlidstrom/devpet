@@ -1,0 +1,54 @@
+name: UI Preview
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    name: Preview (${{ matrix.theme }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        theme: [pocket-color, classic-lcd]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install virtual display and software renderer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb xauth libgl1-mesa-dri libgl1 libx11-6 libxi6
+      - name: Build desktop app
+        run: cargo build --locked -p devpet-pc --bin devpet-pc
+      - name: Capture actual desktop UI
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          DEVPET_UI_PREVIEW_DIR: ui-preview
+          DEVPET_UI_PREVIEW_THEME: ${{ matrix.theme }}
+        run: timeout 90s xvfb-run -a -s '-screen 0 640x576x24' target/debug/devpet-pc
+      - name: Build screenshot gallery
+        run: python3 scripts/ui_preview_gallery.py ui-preview ${{ matrix.theme }}
+      - name: Upload preview
+        id: artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: devpet-ui-preview-${{ matrix.theme }}-${{ github.run_id }}
+          path: ui-preview/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Link preview in run summary
+        env:
+          ARTIFACT_URL: ${{ steps.artifact.outputs.artifact-url }}
+        run: |
+          printf '### DevPet UI preview (%s)\n\n[Download screenshots and gallery](%s)\n\nExtract the ZIP and open `index.html`. Includes Home, Care, Code, Play, Bug Squash, Profile, Evolution, Settings, all ten Byte concepts, Bot, Beast, Ghost, and a low-stat warning capture at 640 × 576.\n' "${{ matrix.theme }}" "$ARTIFACT_URL" >> "$GITHUB_STEP_SUMMARY"

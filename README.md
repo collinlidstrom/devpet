@@ -17,10 +17,12 @@ DevPet is an original developer-themed virtual-pet game built PC-first as a dete
 - Personality derived from how Byte is raised.
 - Deterministic evolution from Byte into **Bot**, **Beast**, or **Ghost**.
 - Profile and Evolution screens.
+- Pocket Color desktop theme with persistent Settings and Classic LCD fallback.
 - Versioned local JSON saves, autosave, atomic replacement, and capped offline progression.
 - Framework-independent integer-only simulation with unit tests.
 - GitHub Actions format, lint, and test checks.
 - Dedicated sprite validation workflow with a downloadable labeled contact sheet.
+- UI preview workflow with downloadable screenshot galleries for both desktop themes.
 
 Run the current PC build:
 
@@ -50,13 +52,18 @@ devpet/
 │           ├── navigation.rs # pure mouse hit-testing and viewport mapping
 │           ├── main.rs       # Macroquad host, screens, input and pixel renderer
 │           ├── sprites.rs    # ten validated 32 x 32 indexed Byte concepts
-│           └── storage.rs    # versioned saves and offline catch-up
+│           ├── storage.rs    # versioned pet saves and offline catch-up
+│           └── theme.rs      # desktop themes, palettes, and settings persistence
 ├── docs/
 │   ├── MVP_PLAN.md           # product, architecture and milestone plan
+│   ├── UI_PREVIEW.md         # screenshot capture workflow and review instructions
 │   └── SPRITES.md            # sprite catalog, rules and contributor workflow
+├── scripts/
+│   └── ui_preview_gallery.py # preview validation and offline gallery builder
 └── .github/workflows/
     ├── ci.yml                # workspace fmt, clippy and tests
-    └── sprite-validation.yml # art checks and generated review artifact
+    ├── sprite-validation.yml # art checks and generated review artifact
+    └── ui-preview.yml        # theme-matrix screenshot capture workflow
 ```
 
 The simulation crate has no window, filesystem, audio, or wall-clock dependencies. That boundary is intentional so its state transitions can later be reproduced in hardware.
@@ -98,6 +105,14 @@ See [docs/MVP_PLAN.md](docs/MVP_PLAN.md) for the detailed roadmap and acceptance
 - Clear separation between simulation and platform code
 - Hardware-aware constraints from the first prototype
 - Playable milestones before content expansion
+
+## UI previews
+
+The **UI Preview** Actions workflow captures both desktop themes into
+downloadable screenshot galleries covering all screens, Byte concepts, evolved
+forms, and the low-stat warning state. See
+[preview instructions](docs/UI_PREVIEW.md) for downloads, manual runs, and
+local capture.
 
 ## Technical references
 

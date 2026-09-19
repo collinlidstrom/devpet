@@ -2,3 +2,4 @@
 
 pub mod navigation;
 pub mod sprites;
+pub mod theme;
