@@ -99,6 +99,12 @@ See [docs/MVP_PLAN.md](docs/MVP_PLAN.md) for the detailed roadmap and acceptance
 - Hardware-aware constraints from the first prototype
 - Playable milestones before content expansion
 
+## UI previews
+
+The **UI Preview** Actions workflow captures all screens and Byte concepts into a
+downloadable screenshot gallery. See [preview instructions](docs/UI_PREVIEW.md)
+for downloads, manual runs, and local capture.
+
 ## Technical references
 
 - [agg23/fpga-tamagotchi](https://github.com/agg23/fpga-tamagotchi) — FPGA project/package architecture reference

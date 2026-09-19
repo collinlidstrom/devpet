@@ -198,7 +198,19 @@ fn menu_targets(screen: Screen) -> Vec<Target> {
 
 #[macroquad::main(conf)]
 async fn main() {
-    let mut pet = storage::load();
+    // Preview mode never reads or writes the player's save.
+    let preview_dir = std::env::var_os("DEVPET_UI_PREVIEW_DIR").map(std::path::PathBuf::from);
+    let mut preview_frame = 0_usize;
+    let mut pet = if let Some(dir) = &preview_dir {
+        std::fs::create_dir_all(dir).expect("create preview directory");
+        PetState {
+            species: Species::Byte,
+            age_minutes: 30,
+            ..PetState::default()
+        }
+    } else {
+        storage::load()
+    };
     let mut screen = Screen::Home;
     let mut selection = 0_usize;
     let mut sprite_index = 0_usize;
@@ -210,167 +222,186 @@ async fn main() {
     let mut last_save = get_time();
 
     loop {
-        if get_time() - last_tick >= 1. {
-            pet.advance_minutes(1);
-            last_tick = get_time();
-        }
-        if get_time() - last_save >= 15. {
-            let _ = storage::save(&pet);
-            last_save = get_time();
-        }
-
-        let pointer =
-            navigation::logical_pointer(screen_width(), screen_height(), mouse_position());
-        let clicked = is_mouse_button_pressed(MouseButton::Left);
-        let targets = menu_targets(screen);
-        let hovered = pointer.and_then(|p| targets.iter().position(|target| target.contains(p)));
-        let mut confirm = is_key_pressed(KeyCode::Enter)
-            || is_key_pressed(KeyCode::Z)
-            || is_key_pressed(KeyCode::Space);
-        // Hover is visual only: a stationary pointer must not steal keyboard focus.
-        if clicked {
-            if let Some(index) = hovered {
-                selection = index;
-                confirm = true;
+        if preview_dir.is_none() {
+            if get_time() - last_tick >= 1. {
+                pet.advance_minutes(1);
+                last_tick = get_time();
             }
-        }
-        if screen == Screen::Home {
-            for (index, key) in [KeyCode::Key1, KeyCode::Key2, KeyCode::Key3, KeyCode::Key4]
-                .iter()
-                .enumerate()
-            {
-                if is_key_pressed(*key) {
+            if get_time() - last_save >= 15. {
+                let _ = storage::save(&pet);
+                last_save = get_time();
+            }
+
+            let pointer =
+                navigation::logical_pointer(screen_width(), screen_height(), mouse_position());
+            let clicked = is_mouse_button_pressed(MouseButton::Left);
+            let targets = menu_targets(screen);
+            let hovered =
+                pointer.and_then(|p| targets.iter().position(|target| target.contains(p)));
+            let mut confirm = is_key_pressed(KeyCode::Enter)
+                || is_key_pressed(KeyCode::Z)
+                || is_key_pressed(KeyCode::Space);
+            // Hover is visual only: a stationary pointer must not steal keyboard focus.
+            if clicked {
+                if let Some(index) = hovered {
                     selection = index;
                     confirm = true;
                 }
             }
-        }
-        let back = is_key_pressed(KeyCode::Escape)
-            || is_key_pressed(KeyCode::X)
-            || (clicked
-                && screen != Screen::Home
-                && screen != Screen::BugSquash
-                && pointer.is_some_and(|p| navigation::BACK.contains(p)));
-
-        if back {
-            match screen {
-                Screen::Home => {}
-                Screen::Evolution | Screen::SpriteGallery => {
-                    screen = Screen::Profile;
-                    selection = 0;
-                }
-                _ => {
-                    screen = Screen::Home;
-                    selection = 0;
+            if screen == Screen::Home {
+                for (index, key) in [KeyCode::Key1, KeyCode::Key2, KeyCode::Key3, KeyCode::Key4]
+                    .iter()
+                    .enumerate()
+                {
+                    if is_key_pressed(*key) {
+                        selection = index;
+                        confirm = true;
+                    }
                 }
             }
-        }
+            let back = is_key_pressed(KeyCode::Escape)
+                || is_key_pressed(KeyCode::X)
+                || (clicked
+                    && screen != Screen::Home
+                    && screen != Screen::BugSquash
+                    && pointer.is_some_and(|p| navigation::BACK.contains(p)));
 
-        if !back {
-            match screen {
-                Screen::Home => {
-                    if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) {
-                        selection = (selection + 1) % 4;
-                    }
-                    if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) {
-                        selection = (selection + 3) % 4;
-                    }
-                    if confirm {
-                        screen = match selection {
-                            0 => Screen::Code,
-                            1 => Screen::Care,
-                            2 => Screen::Play,
-                            _ => Screen::Profile,
-                        };
-                        selection = 0;
-                    }
-                }
-                Screen::Care => {
-                    nav(&mut selection, 4);
-                    if confirm {
-                        pet.apply(match selection {
-                            0 => Action::Feed,
-                            1 => Action::Coffee,
-                            2 => Action::Rest,
-                            _ => Action::Medicine,
-                        });
-                    }
-                }
-                Screen::Code => {
-                    nav(&mut selection, 4);
-                    if confirm {
-                        pet.run_project(match selection {
-                            0 => Project::FixBug,
-                            1 => Project::BuildFeature,
-                            2 => Project::Refactor,
-                            _ => Project::ShipRelease,
-                        });
-                    }
-                }
-                Screen::Profile => {
-                    nav(&mut selection, 3);
-                    if confirm {
-                        screen = match selection {
-                            0 => Screen::Evolution,
-                            1 => Screen::SpriteGallery,
-                            _ => Screen::Home,
-                        };
-                        selection = 0;
-                    }
-                }
-                Screen::Evolution => {
-                    if confirm {
+            if back {
+                match screen {
+                    Screen::Home => {}
+                    Screen::Evolution | Screen::SpriteGallery => {
                         screen = Screen::Profile;
                         selection = 0;
                     }
-                }
-                Screen::SpriteGallery => {
-                    if is_key_pressed(KeyCode::Right)
-                        || is_key_pressed(KeyCode::D)
-                        || (clicked && pointer.is_some_and(|p| navigation::NEXT.contains(p)))
-                    {
-                        sprite_index = (sprite_index + 1) % BYTE_CONCEPTS.len();
-                    }
-                    if is_key_pressed(KeyCode::Left)
-                        || is_key_pressed(KeyCode::A)
-                        || (clicked && pointer.is_some_and(|p| navigation::PREVIOUS.contains(p)))
-                    {
-                        sprite_index =
-                            (sprite_index + BYTE_CONCEPTS.len() - 1) % BYTE_CONCEPTS.len();
-                    }
-                    if confirm {
-                        screen = Screen::Profile;
-                        selection = 0;
-                    }
-                }
-                Screen::Play => {
-                    if confirm {
-                        screen = Screen::BugSquash;
-                        game_start = get_time();
-                        hits = 0;
-                        bug_x = 30.;
-                        bug_y = 50.;
-                    }
-                }
-                Screen::BugSquash => {
-                    let elapsed = get_time() - game_start;
-                    if elapsed >= 20. {
-                        pet.bug_squash_reward(hits);
+                    _ => {
                         screen = Screen::Home;
                         selection = 0;
-                    } else {
-                        if clicked
-                            && pointer.is_some_and(|(x, y)| {
-                                (x - bug_x).abs() < 8. && (y - bug_y).abs() < 8.
-                            })
+                    }
+                }
+            }
+
+            if !back {
+                match screen {
+                    Screen::Home => {
+                        if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) {
+                            selection = (selection + 1) % 4;
+                        }
+                        if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) {
+                            selection = (selection + 3) % 4;
+                        }
+                        if confirm {
+                            screen = match selection {
+                                0 => Screen::Code,
+                                1 => Screen::Care,
+                                2 => Screen::Play,
+                                _ => Screen::Profile,
+                            };
+                            selection = 0;
+                        }
+                    }
+                    Screen::Care => {
+                        nav(&mut selection, 4);
+                        if confirm {
+                            pet.apply(match selection {
+                                0 => Action::Feed,
+                                1 => Action::Coffee,
+                                2 => Action::Rest,
+                                _ => Action::Medicine,
+                            });
+                        }
+                    }
+                    Screen::Code => {
+                        nav(&mut selection, 4);
+                        if confirm {
+                            pet.run_project(match selection {
+                                0 => Project::FixBug,
+                                1 => Project::BuildFeature,
+                                2 => Project::Refactor,
+                                _ => Project::ShipRelease,
+                            });
+                        }
+                    }
+                    Screen::Profile => {
+                        nav(&mut selection, 3);
+                        if confirm {
+                            screen = match selection {
+                                0 => Screen::Evolution,
+                                1 => Screen::SpriteGallery,
+                                _ => Screen::Home,
+                            };
+                            selection = 0;
+                        }
+                    }
+                    Screen::Evolution => {
+                        if confirm {
+                            screen = Screen::Profile;
+                            selection = 0;
+                        }
+                    }
+                    Screen::SpriteGallery => {
+                        if is_key_pressed(KeyCode::Right)
+                            || is_key_pressed(KeyCode::D)
+                            || (clicked && pointer.is_some_and(|p| navigation::NEXT.contains(p)))
                         {
-                            hits = hits.saturating_add(1);
-                            bug_x = 15. + (f32::from(hits) * 37.) % 130.;
-                            bug_y = 30. + (f32::from(hits) * 23.) % 70.;
+                            sprite_index = (sprite_index + 1) % BYTE_CONCEPTS.len();
+                        }
+                        if is_key_pressed(KeyCode::Left)
+                            || is_key_pressed(KeyCode::A)
+                            || (clicked
+                                && pointer.is_some_and(|p| navigation::PREVIOUS.contains(p)))
+                        {
+                            sprite_index =
+                                (sprite_index + BYTE_CONCEPTS.len() - 1) % BYTE_CONCEPTS.len();
+                        }
+                        if confirm {
+                            screen = Screen::Profile;
+                            selection = 0;
+                        }
+                    }
+                    Screen::Play => {
+                        if confirm {
+                            screen = Screen::BugSquash;
+                            game_start = get_time();
+                            hits = 0;
+                            bug_x = 30.;
+                            bug_y = 50.;
+                        }
+                    }
+                    Screen::BugSquash => {
+                        let elapsed = get_time() - game_start;
+                        if elapsed >= 20. {
+                            pet.bug_squash_reward(hits);
+                            screen = Screen::Home;
+                            selection = 0;
+                        } else {
+                            if clicked
+                                && pointer.is_some_and(|(x, y)| {
+                                    (x - bug_x).abs() < 8. && (y - bug_y).abs() < 8.
+                                })
+                            {
+                                hits = hits.saturating_add(1);
+                                bug_x = 15. + (f32::from(hits) * 37.) % 130.;
+                                bug_y = 30. + (f32::from(hits) * 23.) % 70.;
+                            }
                         }
                     }
                 }
             }
+        }
+        // Two frames per case allow font/texture initialization to settle.
+        let preview_case = preview_frame / 2;
+        if preview_dir.is_some() {
+            screen = match preview_case {
+                0 => Screen::Home,
+                1 => Screen::Care,
+                2 => Screen::Code,
+                3 => Screen::Play,
+                4 => Screen::BugSquash,
+                5 => Screen::Profile,
+                6 => Screen::Evolution,
+                _ => Screen::SpriteGallery,
+            };
+            sprite_index = preview_case.saturating_sub(7);
         }
 
         clear_background(BLACK);
@@ -393,7 +424,11 @@ async fn main() {
         });
         draw_rectangle(0., 0., W, H, BG);
 
-        let animation_time = get_time() as f32;
+        let animation_time = if preview_dir.is_some() {
+            0.0
+        } else {
+            get_time() as f32
+        };
         match screen {
             Screen::Home => {
                 txt("DEVPET", 5., 10., 7);
@@ -566,7 +601,11 @@ async fn main() {
                 txt("X = BACK", 55., 135., 6);
             }
             Screen::BugSquash => {
-                let seconds_left = (20. - (get_time() - game_start)).max(0.);
+                let seconds_left = if preview_dir.is_some() {
+                    20.
+                } else {
+                    (20. - (get_time() - game_start)).max(0.)
+                };
                 txt(
                     &format!("BUG SQUASH   {:02}s", seconds_left.ceil() as i32),
                     5.,
@@ -582,7 +621,11 @@ async fn main() {
         }
 
         // Resolve against the new screen after a transition, not stale targets.
-        if let Some(point) = pointer {
+        if let Some(point) = if preview_dir.is_some() {
+            None
+        } else {
+            navigation::logical_pointer(screen_width(), screen_height(), mouse_position())
+        } {
             let mut visible_targets = menu_targets(screen);
             if screen != Screen::Home && screen != Screen::BugSquash {
                 visible_targets.push(navigation::BACK);
@@ -597,7 +640,27 @@ async fn main() {
             }
         }
         set_default_camera();
-        if is_key_pressed(KeyCode::Q) {
+        if let Some(dir) = &preview_dir {
+            if preview_frame % 2 == 1 {
+                let name = match preview_case {
+                    0 => "home".to_string(),
+                    1 => "care".to_string(),
+                    2 => "code".to_string(),
+                    3 => "play".to_string(),
+                    4 => "bug-squash".to_string(),
+                    5 => "profile".to_string(),
+                    6 => "evolution".to_string(),
+                    _ => format!("sprite-{:02}", sprite_index + 1),
+                };
+                let path = dir.join(format!("{preview_case:02}-{name}.png"));
+                get_screen_data().export_png(path.to_str().expect("UTF-8 preview path"));
+                println!("Captured {}", path.display());
+                if preview_case == 6 + BYTE_CONCEPTS.len() {
+                    break;
+                }
+            }
+            preview_frame += 1;
+        } else if is_key_pressed(KeyCode::Q) {
             let _ = storage::save(&pet);
             break;
         }
